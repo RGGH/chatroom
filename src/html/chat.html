@@ -1,0 +1,417 @@
+<!-- src/html/chat.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RustChat | Real-time Messaging</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f9fafb;
+            --panel-color: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --message-sent: #f3f4f6;
+            --message-received: #e0e7ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background-color: var(--panel-color);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .logo-icon {
+            color: var(--primary-color);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .chat-container {
+            background-color: var(--panel-color);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        
+        .chat-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .user-count {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .online-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+        }
+        
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: calc(100vh - 280px);
+            min-height: 300px;
+        }
+        
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+        
+        .message.sent {
+            align-self: flex-end;
+        }
+        
+        .message.received {
+            align-self: flex-start;
+        }
+        
+        .message-content {
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.9375rem;
+            word-break: break-word;
+        }
+        
+        .sent .message-content {
+            background-color: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 0.25rem;
+        }
+        
+        .received .message-content {
+            background-color: var(--message-received);
+            border-bottom-left-radius: 0.25rem;
+        }
+        
+        .message-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .sender {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .timestamp {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+        
+        .chat-input {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--panel-color);
+        }
+        
+        .user-details {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .username-input {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            outline: none;
+            width: 200px;
+            transition: border-color 0.15s;
+        }
+        
+        .username-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 1px var(--primary-color);
+        }
+        
+        #message-form {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        #message-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-size: 0.9375rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        
+        #message-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 1px var(--primary-color);
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.75rem 1.25rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        @media (max-width: 640px) {
+            .chat-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .messages {
+                max-height: calc(100vh - 320px);
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-comments logo-icon"></i> RustChat</h1>
+        <div class="user-count">
+            <span class="online-indicator"></span>
+            <span id="user-count">Connecting...</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>Chat Room</h2>
+                <div>
+                    <span id="connection-status">Connecting...</span>
+                </div>
+            </div>
+            
+            <div id="messages" class="messages">
+                <!-- Messages will be added here -->
+            </div>
+            
+            <div class="chat-input">
+                <div class="user-details">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="username" class="username-input" placeholder="Your name" value="Anonymous">
+                </div>
+                
+                <form id="message-form">
+                    <input type="text" id="message-input" placeholder="Type a message..." required autocomplete="off">
+                    <button type="submit">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Send</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        Powered by WebSockets & Rust | &copy; 2025 RustChat
+    </div>
+
+    <script>
+        // Connect to WebSocket
+        const ws = new WebSocket(`ws://${window.location.host}/ws`);
+        const messagesDiv = document.getElementById('messages');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const usernameInput = document.getElementById('username');
+        const connectionStatus = document.getElementById('connection-status');
+        const userCount = document.getElementById('user-count');
+        
+        let activeUsers = 0;
+        
+        // Handle incoming messages
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            addMessageToChat(message);
+        };
+
+        // Handle form submission
+        messageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const content = messageInput.value.trim();
+            if (content) {
+                const message = {
+                    sender: usernameInput.value || 'Anonymous',
+                    content: content,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Send message
+                ws.send(JSON.stringify(message));
+                
+                // Clear input
+                messageInput.value = '';
+                messageInput.focus();
+            }
+        });
+
+        function addMessageToChat(message) {
+            const isCurrentUser = message.sender === usernameInput.value;
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${isCurrentUser ? 'sent' : 'received'}`;
+            
+            const time = new Date(message.timestamp);
+            const formattedTime = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            const metaHTML = `
+                <div class="message-meta">
+                    <span class="sender">${escapeHtml(message.sender)}</span>
+                    <span class="timestamp">${formattedTime}</span>
+                </div>
+            `;
+            
+            const contentHTML = `
+                <div class="message-content">
+                    ${escapeHtml(message.content)}
+                </div>
+            `;
+            
+            messageElement.innerHTML = metaHTML + contentHTML;
+            
+            messagesDiv.appendChild(messageElement);
+            scrollToBottom();
+        }
+        
+        function scrollToBottom() {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Handle connection status
+        ws.onopen = () => {
+            connectionStatus.innerHTML = '<span class="online-indicator"></span> Connected';
+            connectionStatus.style.color = '#10b981';
+            
+            // Add welcome message
+            addMessageToChat({
+                sender: 'System',
+                content: 'Welcome to the chat room! You are now connected.',
+                timestamp: new Date().toISOString()
+            });
+            
+            // Set focus to message input
+            messageInput.focus();
+        };
+        
+        ws.onclose = () => {
+            connectionStatus.textContent = 'Disconnected';
+            connectionStatus.style.color = '#ef4444';
+            
+            // Add disconnection message
+            addMessageToChat({
+                sender: 'System',
+                content: '⚠️ You have been disconnected from the server.',
+                timestamp: new Date().toISOString()
+            });
+        };
+        
+        // Keep track of active users (this would require server support)
+        // For demo, we'll simulate random user counts
+        function updateUserCount() {
+            activeUsers = Math.floor(Math.random() * 10) + 2;
+            userCount.textContent = `${activeUsers} users online`;
+        }
+        
+        setInterval(updateUserCount, 30000);
+        setTimeout(updateUserCount, 2000);
+        
+        // Store username in local storage
+        usernameInput.value = localStorage.getItem('chat-username') || 'Anonymous';
+        usernameInput.addEventListener('change', () => {
+            localStorage.setItem('chat-username', usernameInput.value);
+        });
+    </script>
+</body>
+</html>
